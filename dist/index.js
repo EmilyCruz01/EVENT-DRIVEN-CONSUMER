@@ -14,38 +14,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const amqplib_1 = require("amqplib");
 const axios_1 = __importDefault(require("axios"));
-// Definir la clase Pago
-class Pago {
-    constructor(idPago, cantidad, concepto) {
-        this.idPago = idPago;
-        this.cantidad = cantidad;
-        this.concepto = concepto;
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+class Orden {
+    constructor(id_orden, descripcion, total) {
+        this.id_orden = id_orden;
+        this.descripcion = descripcion;
+        this.total = total;
     }
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const connection = yield (0, amqplib_1.connect)('amqp://admin:zoe10208@34.198.106.93');
+        const connection = yield (0, amqplib_1.connect)("amqp://admin:1234@18.213.95.105:5672/");
         const channel = yield connection.createChannel();
-        const queue = 'up.practica';
+        const queue = 'orders_exchange';
         yield channel.assertQueue(queue, { durable: true });
         channel.consume(queue, (message) => __awaiter(this, void 0, void 0, function* () {
             if (message !== null) {
                 try {
                     const payload = message.content.toString();
-                    console.log('Message received:', payload);
-                    const pago = JSON.parse(payload);
-                    console.log('Pago object:', pago);
+                    console.log('Mensaje recibido:', payload);
+                    const orden = JSON.parse(payload);
+                    console.log('Orden object:', orden);
                     const dataToSend = {
-                        idFactura: pago.idPago,
-                        pagoid: pago.cantidad
+                        orden: orden.descripcion,
+                        total: orden.total
                     };
                     console.log("datos a mandar");
                     console.log(dataToSend);
-                    yield axios_1.default.post('https://service-payment-8hs5.onrender.com/facturas', dataToSend);
-                    console.log('Payment processed');
+                    yield axios_1.default.post('https://event-driven-payment.onrender.com/pagos', dataToSend);
+                    console.log('Pago procesado');
                 }
                 catch (error) {
-                    console.error('Error processing message:', error);
+                    console.error('Error procesando mensage:', error);
                 }
                 finally {
                     channel.ack(message);

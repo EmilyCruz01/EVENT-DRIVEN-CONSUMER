@@ -16,10 +16,11 @@ class Orden {
 }
 
 async function main() {
-    const connection = await connect("amqp://admin:1234@18.213.95.105:5672/");
+    const connection = await connect("amqp://admin:1234@18.213.95.105");
     const channel: Channel = await connection.createChannel();
-    const queue: string = 'orders_exchange';
+    const queue: string = 'app.initial';
     await channel.assertQueue(queue, { durable: true });
+    console.log('conectado')
 
     channel.consume(queue, async (message: ConsumeMessage | null) => {
         if (message !== null) {
@@ -35,13 +36,13 @@ async function main() {
                     orden: orden.descripcion,
                     total: orden.total
                 };
-                console.log("datos a mandar")
-                console.log(dataToSend)
-
-                await axios.post('https://event-driven-payment.onrender.com', dataToSend);
-                console.log('Pago procesado');
+                console.log("datos a mandar");
+                console.log(dataToSend);
+            
+                await axios.post("https://event-driven-payment.onrender.com/pagos/", dataToSend);
+                console.log('Orden procesada');
             } catch (error) {
-                console.error('Error procesando mensage:', error);
+                console.error('Error procesando mensaje:', error);
             } finally {
                 channel.ack(message); 
             }
